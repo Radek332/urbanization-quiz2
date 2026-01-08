@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urbanization Mastery Quiz</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 700px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; border-left: 5px solid #3498db; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        .question { font-weight: bold; font-size: 1.2em; margin-bottom: 15px; display: block; }
+        .option { display: block; padding: 12px; margin: 8px 0; border: 2px solid #eee; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background: #fff; }
+        .option:hover { border-color: #3498db; background-color: #f7fbff; }
+        .hint-btn { background: #95a5a6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-bottom: 10px; font-size: 0.8em; }
+        .hint-text { display: none; font-style: italic; color: #7f8c8d; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 5px; }
+        .feedback { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 0.95em; line-height: 1.4; }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .wrong { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #results { text-align: center; display: none; background: #2c3e50; color: white; padding: 30px; }
+        .btn-restart { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-size: 1em; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <h1>Urbanization & Environment Quiz</h1>
+    <div id="quiz-container"></div>
+    <div id="results" class="card">
+        <h2>Quiz Complete!</h2>
+        <p id="score-text" style="font-size: 1.5em;"></p>
+        <button onclick="location.reload()" class="btn-restart">Take it Again</button>
+    </div>
+
+    <script>
+        const quizData = [
+            { q: "What is the primary cause of the 'Urban Heat Island' effect?", options: ["Wind blocking by buildings", "Absorption of solar radiation by dark surfaces", "Waste heat from AC units", "Increased cloud cover"], correct: 1, hint: "Think about asphalt vs. grass.", rationale: "Dark surfaces absorb heat, and cities lack plants for cooling." },
+            { q: "How do impervious surfaces affect the water cycle?", options: ["Increase groundwater recharge", "Decrease runoff speed", "Reduce evaporation", "Increase surface runoff and pollutants"], correct: 3, hint: "What happens to rain on a parking lot?", rationale: "Hard surfaces prevent water from soaking in and increase runoff." },
+            { q: "What drives saltwater intrusion in coastal cities?", options: ["Sea level rise", "Excessive pumping of freshwater aquifers", "Road salt runoff", "Deep building foundations"], correct: 1, hint: "Taking too much water out.", rationale: "Pumping freshwater lets saltwater move into the aquifer." },
+            { q: "Which is a hallmark of 'Urban Sprawl'?", options: ["High-density housing", "Low-density residential expansion", "Mixed-use zoning", "Vertical city growth"], correct: 1, hint: "Spreading OUT, not UP.", rationale: "Sprawl is low-density expansion into rural areas." },
+            { q: "How does urbanization disrupt the Carbon Cycle?", options: ["By planting more trees", "Through landfills and fossil fuel combustion", "By trapping CO2 in asphalt", "By reducing the total human population"], correct: 1, hint: "Cars and trash.", rationale: "Fuel burning and landfills release greenhouse gases." },
+            { q: "Why is Land Remediation useful against sprawl?", options: ["It turns forests into malls", "It cleans contaminated city land for reuse", "It makes it cheaper to build on farms", "It increases car usage"], correct: 1, hint: "Recycling land.", rationale: "Cleaning urban land reduces the need to build on nature." },
+            { q: "What is a social/economic drawback of sprawl?", options: ["Cheaper infrastructure", "Increased physical activity", "Increased isolation and infrastructure costs", "Better air quality"], correct: 2, hint: "Long drives and expensive pipes.", rationale: "Sprawl is expensive to service and isolates people." },
+            { q: "What does 'Habitat Fragmentation' lead to?", options: ["Higher biodiversity", "Loss of ecosystem services", "Easier animal migration", "Better soil nutrients"], correct: 1, hint: "A highway through a forest.", rationale: "Breaking up land makes it hard for species to survive." },
+            { q: "How does vegetation cool a city?", options: ["Shade and evapotranspiration", "Sucking up all the CO2", "Turning sunlight into electricity", "Reflecting 100% of light"], correct: 0, hint: "Plants 'sweat'.", rationale: "Shade and water vapor release cool the air." },
+            { q: "Which efficiency is gained by high-density cities?", options: ["More land per person", "Higher infrastructure efficiency", "More car usage", "Less noise"], correct: 1, hint: "Many people, one pipe.", rationale: "High-density is much more cost-effective for a city." }
+        ];
+
+        const container = document.getElementById('quiz-container');
+        let answeredCount = 0;
+        let score = 0;
+
+        quizData.forEach((data, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <span class="question">${index + 1}. ${data.q}</span>
+                <button class="hint-btn" onclick="toggleHint(${index})">Need a hint?</button>
+                <div id="hint-${index}" class="hint-text">${data.hint}</div>
+                <div id="options-${index}">
+                    ${data.options.map((opt, i) => `
+                        <div class="option" onclick="checkAnswer(${index}, ${i})">${opt}</div>
+                    `).join('')}
+                </div>
+                <div id="feedback-${index}" class="feedback"></div>
+            `;
+            container.appendChild(card);
+        });
+
+        function toggleHint(index) {
+            const hint = document.getElementById(`hint-${index}`);
+            hint.style.display = hint.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function checkAnswer(qIdx, choiceIdx) {
+            const feedback = document.getElementById(`feedback-${qIdx}`);
+            const options = document.getElementById(`options-${qIdx}`).children;
+            for(let opt of options) opt.style.pointerEvents = 'none';
+            if (choiceIdx === quizData[qIdx].correct) {
+                feedback.innerHTML = "<strong>Správně!</strong> " + quizData[qIdx].rationale;
+                feedback.className = "feedback correct";
+                score++;
+            } else {
+                feedback.innerHTML = "<strong>Špatně.</strong> " + quizData[qIdx].rationale;
+                feedback.className = "feedback wrong";
+            }
+            feedback.style.display = 'block';
+            answeredCount++;
+            if (answeredCount === quizData.length) {
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('score-text').innerText = `Skóre: ${score} / ${quizData.length}`;
+            }
+        }
+    </script>
+</body>
+</html>
