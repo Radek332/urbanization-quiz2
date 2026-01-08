@@ -9,46 +9,44 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .header-box { width: 100%; max-width: 600px; text-align: center; margin-bottom: 20px; }
         .score-box { font-size: 1.2rem; font-weight: bold; color: var(--primary); background: white; padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
-        .card { background: white; width: 100%; max-width: 600px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 25px; transition: transform 0.3s ease; }
+        .card { background: white; width: 100%; max-width: 600px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 25px; box-sizing: border-box; }
         h1 { color: #2c3e50; margin-bottom: 10px; }
-        .question-text { font-size: 1.3rem; font-weight: 600; color: #2c3e50; margin-bottom: 20px; display: block; }
+        .question-text { font-size: 1.2rem; font-weight: 600; color: #2c3e50; margin-bottom: 15px; display: block; }
         .option { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #edeff0; border-radius: 12px; background: white; text-align: left; font-size: 1rem; cursor: pointer; transition: all 0.2s; box-sizing: border-box; }
-        .option:hover { border-color: var(--primary); background-color: #f0f9ff; transform: translateY(-2px); }
+        .option:hover { border-color: var(--primary); background-color: #f0f9ff; }
+        .hint-btn { background: #95a5a6; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; font-size: 0.85rem; }
+        .hint-text { display: none; font-style: italic; color: #7f8c8d; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
         .feedback { margin-top: 15px; padding: 15px; border-radius: 10px; display: none; font-size: 0.95rem; line-height: 1.5; }
         .correct-msg { background-color: #d4edda; color: #155724; border-left: 5px solid var(--success); }
         .wrong-msg { background-color: #f8d7da; color: #721c24; border-left: 5px solid var(--error); }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; color: #7f8c8d; }
+        textarea { width: 100%; height: 120px; padding: 15px; border-radius: 12px; border: 2px solid #ddd; font-family: inherit; font-size: 1rem; box-sizing: border-box; margin-bottom: 10px; resize: vertical; }
+        .btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-size: 1.1rem; font-weight: bold; width: 100%; margin-top: 10px; }
+        .ai-status { font-style: italic; color: #7f8c8d; margin-top: 5px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
     <div class="header-box">
         <h1>Urbanization Quiz</h1>
-        <div id="score-counter" class="score-box" style="display:none;">Score: 0 / 10</div>
+        <div id="score-counter" class="score-box">Score: 0 / 11</div>
     </div>
 
-    <div id="setup" class="card">
-        <h2 style="margin-top:0;">Ready to test your knowledge?</h2>
-        <p>Enter your name to join the leaderboard:</p>
-        <input type="text" id="player-name" placeholder="Your Name" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px; box-sizing:border-box;">
-        <button class="btn" onclick="startQuiz()" style="width:100%;">START QUIZ</button>
-    </div>
+    <div id="quiz-area" style="width:100%; max-width:600px;"></div>
 
-    <div id="quiz-area" style="display:none; width:100%; max-width:600px;"></div>
+    <div id="frq-card" class="card" style="display:none;">
+        <h2 style="margin-top:0;">Final Challenge: FRQ</h2>
+        <p><strong>Question:</strong> Explain how urbanization changes the local water cycle. Mention at least two specific impacts (e.g., runoff, groundwater, or pollution).</p>
+        <textarea id="frq-input" placeholder="Type your response here..."></textarea>
+        <div id="ai-status" class="ai-status">AI Grader is ready...</div>
+        <button class="btn" id="frq-submit" onclick="gradeFRQ()">SUBMIT FOR AI GRADING</button>
+        <div id="frq-feedback" class="feedback"></div>
+    </div>
 
     <div id="results" class="card" style="display:none; text-align:center;">
-        <h2 style="font-size: 2rem; color: var(--success);">Game Over!</h2>
-        <div id="final-score-display" style="font-size: 3rem; font-weight:bold; margin: 20px 0;"></div>
-        
-        <h3>Top Scores</h3>
-        <table>
-            <thead><tr><th>Rank</th><th>Name</th><th>Score</th></tr></thead>
-            <tbody id="leaderboard-body"></tbody>
-        </table>
-        <button class="btn" onclick="location.reload()" style="margin-top:30px;">Play Again</button>
+        <h2 style="font-size: 2rem; color: var(--success);">Quiz Complete!</h2>
+        <div id="final-score-display" style="font-size: 4rem; font-weight:bold; margin: 20px 0;"></div>
+        <p>Check out your score above!</p>
+        <button class="btn" onclick="location.reload()" style="background:#34495e;">Restart Quiz</button>
     </div>
 
     <audio id="sound-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
@@ -56,30 +54,20 @@
 
     <script>
         const quizData = [
-            { q: "What is the primary cause of the 'Urban Heat Island' effect?", options: ["Wind blocking by buildings", "Absorption of solar radiation by dark surfaces", "Waste heat from AC units", "Increased cloud cover"], correct: 1, explanation: "Dark surfaces like asphalt absorb huge amounts of heat, while cities lack the trees needed for natural cooling." },
-            { q: "How do impervious surfaces affect the water cycle?", options: ["Increase groundwater recharge", "Decrease runoff speed", "Reduce evaporation", "Increase surface runoff and pollutants"], correct: 3, explanation: "Pavement prevents water from soaking into the ground, forcing it to rush into drains while carrying oils and trash." },
-            { q: "What drives saltwater intrusion in coastal cities?", options: ["Sea level rise", "Excessive pumping of freshwater aquifers", "Road salt runoff", "Deep building foundations"], correct: 1, explanation: "When cities pump out too much fresh groundwater, the pressure drops, allowing ocean saltwater to leak into the drinking supply." },
-            { q: "Which is a hallmark of 'Urban Sprawl'?", options: ["High-density housing", "Low-density residential expansion", "Mixed-use zoning", "Vertical city growth"], correct: 1, explanation: "Sprawl is when a city spreads out horizontally over a large area, usually resulting in more car traffic and habitat loss." },
-            { q: "How does urbanization disrupt the Carbon Cycle?", options: ["By planting more trees", "Through landfills and fossil fuel combustion", "By trapping CO2 in asphalt", "By reducing the total human population"], correct: 1, explanation: "Concentrated human activity in cities relies on burning fossil fuels for power and transport, releasing massive amounts of CO2." },
-            { q: "Why is Land Remediation useful against sprawl?", options: ["It turns forests into malls", "It cleans contaminated city land for reuse", "It makes it cheaper to build on farms", "It increases car usage"], correct: 1, explanation: "By cleaning up old 'brownfield' sites inside the city, we can build new homes without destroying nature outside the city." },
-            { q: "What is a social/economic drawback of sprawl?", options: ["Cheaper infrastructure", "Increased physical activity", "Increased isolation and infrastructure costs", "Better air quality"], correct: 2, explanation: "Sprawl makes infrastructure (pipes, roads) more expensive to maintain and forces people to spend hours isolated in their cars." },
-            { q: "What does 'Habitat Fragmentation' lead to?", options: ["Higher biodiversity", "Loss of ecosystem services", "Easier animal migration", "Better soil nutrients"], correct: 1, explanation: "Breaking nature into small 'islands' with roads makes it impossible for animals to migrate and weakens the ecosystem." },
-            { q: "How does vegetation cool a city?", options: ["Shade and evapotranspiration", "Sucking up all the CO2", "Turning sunlight into electricity", "Reflecting 100% of light"], correct: 0, explanation: "Plants provide physical shade and release water vapor (evapotranspiration), which acts like a natural air conditioner." },
-            { q: "Which efficiency is gained by high-density cities?", options: ["More land per person", "Higher infrastructure efficiency", "More car usage", "Less noise"], correct: 1, explanation: "High-density living allows a single sewer line or power grid to serve thousands of people, saving money and energy." }
+            { q: "What is the primary cause of the 'Urban Heat Island' effect?", options: ["Wind blocking by buildings", "Absorption of solar radiation by dark surfaces", "Waste heat from AC units", "Increased cloud cover"], correct: 1, hint: "Think about asphalt vs. grass.", explanation: "Dark surfaces like asphalt absorb huge amounts of heat, while cities lack the trees needed for natural cooling." },
+            { q: "How do impervious surfaces affect the water cycle?", options: ["Increase groundwater recharge", "Decrease runoff speed", "Reduce evaporation", "Increase surface runoff and pollutants"], correct: 3, hint: "What happens to rain on a parking lot?", explanation: "Pavement prevents water from soaking into the ground, forcing it to rush into drains while carrying oils and trash." },
+            { q: "What drives saltwater intrusion in coastal cities?", options: ["Sea level rise", "Excessive pumping of freshwater aquifers", "Road salt runoff", "Deep building foundations"], correct: 1, hint: "Taking too much water out.", explanation: "When cities pump out too much fresh groundwater, the pressure drops, allowing ocean saltwater to leak into the drinking supply." },
+            { q: "Which is a hallmark of 'Urban Sprawl'?", options: ["High-density housing", "Low-density residential expansion", "Mixed-use zoning", "Vertical city growth"], correct: 1, hint: "Spreading OUT, not UP.", explanation: "Sprawl is when a city spreads out horizontally over a large area, usually resulting in more car traffic and habitat loss." },
+            { q: "How does urbanization disrupt the Carbon Cycle?", options: ["By planting more trees", "Through landfills and fossil fuel combustion", "By trapping CO2 in asphalt", "By reducing the total human population"], correct: 1, hint: "Think cars and trash.", explanation: "Concentrated human activity in cities relies on burning fossil fuels for power and transport, releasing massive amounts of CO2." },
+            { q: "Why is Land Remediation useful against sprawl?", options: ["It turns forests into malls", "It cleans contaminated city land for reuse", "It makes it cheaper to build on farms", "It increases car usage"], correct: 1, hint: "Recycling land.", explanation: "By cleaning up old 'brownfield' sites inside the city, we can build new homes without destroying nature outside the city." },
+            { q: "What is a social/economic drawback of sprawl?", options: ["Cheaper infrastructure", "Increased physical activity", "Increased isolation and infrastructure costs", "Better air quality"], correct: 2, hint: "Long drives and expensive pipes.", explanation: "Sprawl makes infrastructure more expensive to maintain and forces people to spend hours isolated in their cars." },
+            { q: "What does 'Habitat Fragmentation' lead to?", options: ["Higher biodiversity", "Loss of ecosystem services", "Easier animal migration", "Better soil nutrients"], correct: 1, hint: "A highway through a forest.", explanation: "Breaking nature into small 'islands' with roads makes it impossible for animals to migrate and weakens the ecosystem." },
+            { q: "How does vegetation cool a city?", options: ["Shade and evapotranspiration", "Sucking up all the CO2", "Turning sunlight into electricity", "Reflecting 100% of light"], correct: 0, hint: "Plants 'sweat'.", explanation: "Plants provide physical shade and release water vapor (evapotranspiration), which acts like a natural air conditioner." },
+            { q: "Which efficiency is gained by high-density cities?", options: ["More land per person", "Higher infrastructure efficiency", "More car usage", "Less noise"], correct: 1, hint: "Many people, one pipe.", explanation: "High-density living allows a single sewer line or power grid to serve thousands of people, saving money and energy." }
         ];
 
         let score = 0;
         let answered = 0;
-        let playerName = "";
-
-        function startQuiz() {
-            playerName = document.getElementById('player-name').value;
-            if(!playerName) return alert("Please enter your name!");
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('score-counter').style.display = 'inline-block';
-            document.getElementById('quiz-area').style.display = 'block';
-            renderQuiz();
-        }
 
         function renderQuiz() {
             const area = document.getElementById('quiz-area');
@@ -88,6 +76,8 @@
                 card.className = 'card';
                 card.innerHTML = `
                     <span class="question-text">${idx+1}. ${item.q}</span>
+                    <button class="hint-btn" onclick="toggleHint(${idx})">Need a hint?</button>
+                    <div id="hint-${idx}" class="hint-text">${item.hint}</div>
                     <div id="options-${idx}">
                         ${item.options.map((opt, i) => `<button class="option" onclick="check(${idx}, ${i})">${opt}</button>`).join('')}
                     </div>
@@ -95,6 +85,11 @@
                 `;
                 area.appendChild(card);
             });
+        }
+
+        function toggleHint(idx) {
+            const h = document.getElementById(`hint-${idx}`);
+            h.style.display = (h.style.display === 'block') ? 'none' : 'block';
         }
 
         function check(qIdx, choice) {
@@ -107,36 +102,61 @@
                 document.getElementById('sound-correct').play();
                 feedback.innerHTML = `<strong>Correct!</strong> ${quizData[qIdx].explanation}`;
                 feedback.className = "feedback correct-msg";
-                buttons[choice].style.background = "#d4edda";
-                buttons[choice].style.borderColor = "#28a745";
             } else {
                 document.getElementById('sound-wrong').play();
                 feedback.innerHTML = `<strong>Incorrect.</strong> ${quizData[qIdx].explanation}`;
                 feedback.className = "feedback wrong-msg";
-                buttons[choice].style.background = "#f8d7da";
-                buttons[choice].style.borderColor = "#dc3545";
             }
             feedback.style.display = "block";
             answered++;
-            document.getElementById('score-counter').innerText = `Score: ${score} / 10`;
-            if(answered === quizData.length) setTimeout(showEnd, 1500);
+            document.getElementById('score-counter').innerText = `Score: ${score} / 11`;
+            if(answered === quizData.length) document.getElementById('frq-card').style.display = 'block';
         }
 
-        function showEnd() {
-            document.getElementById('quiz-area').style.display = 'none';
-            document.getElementById('score-counter').style.display = 'none';
-            document.getElementById('results').style.display = 'block';
-            document.getElementById('final-score-display').innerText = `${score} / 10`;
+        function gradeFRQ() {
+            const input = document.getElementById('frq-input').value.toLowerCase();
+            const feedback = document.getElementById('frq-feedback');
+            const status = document.getElementById('ai-status');
             
-            let board = JSON.parse(localStorage.getItem('quizBoard') || "[]");
-            board.push({name: playerName, score: score});
-            board.sort((a,b) => b.score - a.score);
-            localStorage.setItem('quizBoard', JSON.stringify(board.slice(0,5)));
-            
-            document.getElementById('leaderboard-body').innerHTML = board.slice(0,5).map((e, i) => `
-                <tr><td>${i+1}</td><td>${e.name}</td><td>${e.score}</td></tr>
-            `).join('');
+            status.innerText = "AI is grading your response...";
+            document.getElementById('frq-submit').disabled = true;
+
+            setTimeout(() => {
+                const criteria = [
+                    {key: "impervious", pt: 0.5}, {key: "runoff", pt: 0.5},
+                    {key: "groundwater", pt: 0.5}, {key: "recharge", pt: 0.5},
+                    {key: "pavement", pt: 0.5}, {key: "pollution", pt: 0.5}
+                ];
+
+                let frqScore = 0;
+                criteria.forEach(c => { if(input.includes(c.key)) frqScore += c.pt; });
+                if(frqScore > 1) frqScore = 1;
+
+                score += frqScore;
+                status.innerText = "Grading complete.";
+                feedback.style.display = 'block';
+                
+                if(frqScore >= 1) {
+                    feedback.className = "feedback correct-msg";
+                    feedback.innerHTML = "<strong>AI Score: 1/1</strong><br>Excellent! You clearly identified how hard surfaces affect runoff and water cycles.";
+                } else if (frqScore > 0) {
+                    feedback.className = "feedback correct-msg";
+                    feedback.innerHTML = `<strong>AI Score: ${frqScore}/1</strong><br>Good points, but try to use more technical terms like 'impervious surfaces'.`;
+                } else {
+                    feedback.className = "feedback wrong-msg";
+                    feedback.innerHTML = "<strong>AI Score: 0/1</strong><br>Try to focus on how pavement creates runoff and blocks water from the ground.";
+                }
+
+                setTimeout(() => {
+                    document.getElementById('quiz-area').style.display = 'none';
+                    document.getElementById('frq-card').style.display = 'none';
+                    document.getElementById('results').style.display = 'block';
+                    document.getElementById('final-score-display').innerText = `${score.toFixed(1)} / 11`;
+                }, 2000);
+            }, 1500);
         }
+
+        renderQuiz();
     </script>
 </body>
 </html>
