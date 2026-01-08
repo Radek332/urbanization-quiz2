@@ -1,33 +1,57 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Urbanization Mastery Quiz</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 700px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; max-width: 700px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; border-left: 5px solid #3498db; }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        h1 { color: #2c3e50; text-align: center; }
         .question { font-weight: bold; font-size: 1.2em; margin-bottom: 15px; display: block; }
-        .option { display: block; padding: 12px; margin: 8px 0; border: 2px solid #eee; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background: #fff; }
+        .option { display: block; padding: 12px; margin: 8px 0; border: 2px solid #eee; border-radius: 8px; cursor: pointer; transition: 0.2s; background: #fff; }
         .option:hover { border-color: #3498db; background-color: #f7fbff; }
         .hint-btn { background: #95a5a6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-bottom: 10px; font-size: 0.8em; }
         .hint-text { display: none; font-style: italic; color: #7f8c8d; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 5px; }
-        .feedback { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 0.95em; line-height: 1.4; }
+        .feedback { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 0.95em; }
         .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .wrong { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        #results { text-align: center; display: none; background: #2c3e50; color: white; padding: 30px; }
-        .btn-restart { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-size: 1em; margin-top: 15px; }
+        #results, #setup { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        .btn { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-size: 1.2em; margin-top: 10px; }
+        input[type="text"] { padding: 12px; width: 80%; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; font-size: 1em; }
     </style>
 </head>
 <body>
 
-    <h1>Urbanization & Environment Quiz</h1>
-    <div id="quiz-container"></div>
-    <div id="results" class="card">
+    <h1>Urbanization Quiz</h1>
+
+    <audio id="sound-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="sound-wrong" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
+    <audio id="sound-bg" loop src="https://assets.mixkit.co/active_storage/sfx/123/123-preview.mp3"></audio>
+
+    <div id="setup" class="card">
+        <h2>Enter your name to start:</h2>
+        <input type="text" id="player-name" placeholder="Type name here...">
+        <br>
+        <button class="btn" onclick="startQuiz()">GO!</button>
+    </div>
+
+    <div id="quiz-container" style="display:none;"></div>
+
+    <div id="results" class="card" style="display:none;">
         <h2>Quiz Complete!</h2>
-        <p id="score-text" style="font-size: 1.5em;"></p>
-        <button onclick="location.reload()" class="btn-restart">Take it Again</button>
+        <p id="score-text" style="font-size: 2em; font-weight: bold; color: #27ae60;"></p>
+        
+        <h3>Leaderboard</h3>
+        <table id="leaderboard-table">
+            <thead><tr><th>Rank</th><th>Name</th><th>Score</th></tr></thead>
+            <tbody id="leaderboard-body"></tbody>
+        </table>
+        <br>
+        <button onclick="location.reload()" class="btn" style="background:#3498db;">Restart Application</button>
     </div>
 
     <script>
@@ -44,50 +68,72 @@
             { q: "Which efficiency is gained by high-density cities?", options: ["More land per person", "Higher infrastructure efficiency", "More car usage", "Less noise"], correct: 1, hint: "Many people, one pipe.", rationale: "High-density is much more cost-effective for a city." }
         ];
 
-        const container = document.getElementById('quiz-container');
-        let answeredCount = 0;
+        let currentPlayer = "";
         let score = 0;
+        let answeredCount = 0;
+        let leaderboard = JSON.parse(localStorage.getItem('quizLeaderboard')) || [];
 
-        quizData.forEach((data, index) => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <span class="question">${index + 1}. ${data.q}</span>
-                <button class="hint-btn" onclick="toggleHint(${index})">Need a hint?</button>
-                <div id="hint-${index}" class="hint-text">${data.hint}</div>
-                <div id="options-${index}">
-                    ${data.options.map((opt, i) => `
-                        <div class="option" onclick="checkAnswer(${index}, ${i})">${opt}</div>
-                    `).join('')}
-                </div>
-                <div id="feedback-${index}" class="feedback"></div>
-            `;
-            container.appendChild(card);
-        });
-
-        function toggleHint(index) {
-            const hint = document.getElementById(`hint-${index}`);
-            hint.style.display = hint.style.display === 'block' ? 'none' : 'block';
+        function startQuiz() {
+            currentPlayer = document.getElementById('player-name').value;
+            if(!currentPlayer) { alert("Please enter a name!"); return; }
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('sound-bg').volume = 0.2;
+            document.getElementById('sound-bg').play();
+            renderQuiz();
         }
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = "";
+            quizData.forEach((data, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <span class="question">${index + 1}. ${data.q}</span>
+                    <button class="hint-btn" onclick="toggleHint(${index})">Hint</button>
+                    <div id="hint-${index}" class="hint-text">${data.hint}</div>
+                    <div id="options-${index}">${data.options.map((opt, i) => `<div class="option" onclick="checkAnswer(${index}, ${i})">${opt}</div>`).join('')}</div>
+                    <div id="feedback-${index}" class="feedback"></div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleHint(i) { const h = document.getElementById(`hint-${i}`); h.style.display = h.style.display === 'block' ? 'none' : 'block'; }
 
         function checkAnswer(qIdx, choiceIdx) {
             const feedback = document.getElementById(`feedback-${qIdx}`);
             const options = document.getElementById(`options-${qIdx}`).children;
             for(let opt of options) opt.style.pointerEvents = 'none';
+            
             if (choiceIdx === quizData[qIdx].correct) {
-                feedback.innerHTML = "<strong>Správně!</strong> " + quizData[qIdx].rationale;
+                document.getElementById('sound-correct').play();
+                feedback.innerHTML = "<strong>Correct!</strong> " + quizData[qIdx].rationale;
                 feedback.className = "feedback correct";
                 score++;
             } else {
-                feedback.innerHTML = "<strong>Špatně.</strong> " + quizData[qIdx].rationale;
+                document.getElementById('sound-wrong').play();
+                feedback.innerHTML = "<strong>Incorrect.</strong> " + quizData[qIdx].rationale;
                 feedback.className = "feedback wrong";
             }
             feedback.style.display = 'block';
             answeredCount++;
-            if (answeredCount === quizData.length) {
-                document.getElementById('results').style.display = 'block';
-                document.getElementById('score-text').innerText = `Skóre: ${score} / ${quizData.length}`;
-            }
+            if (answeredCount === quizData.length) showResults();
+        }
+
+        function showResults() {
+            document.getElementById('sound-bg').pause();
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('score-text').innerText = `${score} / ${quizData.length}`;
+            
+            leaderboard.push({name: currentPlayer, score: score});
+            leaderboard.sort((a, b) => b.score - a.score);
+            localStorage.setItem('quizLeaderboard', JSON.stringify(leaderboard));
+            
+            const body = document.getElementById('leaderboard-body');
+            body.innerHTML = leaderboard.slice(0, 5).map((entry, i) => `<tr><td>${i+1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`).join('');
         }
     </script>
 </body>
